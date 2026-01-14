@@ -3,27 +3,32 @@ document.addEventListener('DOMContentLoaded', () => {
     const gameNameInput = document.getElementById('game-name');
     const gamePlatformInput = document.getElementById('game-platform');
     const gamesList = document.getElementById('games');
+    const searchBox = document.getElementById('search-box');
 
-    // 从localStorage加载游戏数据，如果不存在则使用默认数据
     let games = JSON.parse(localStorage.getItem('games')) || [
         { name: '王者荣耀', platform: '手机' },
         { name: '英雄联盟', platform: '网页' },
     ];
 
-    // 保存游戏数据到localStorage
     function saveGames() {
         localStorage.setItem('games', JSON.stringify(games));
     }
 
-    function renderGames() {
+    function renderGames(filter = '') {
         gamesList.innerHTML = '';
-        games.forEach((game, index) => {
+        const filteredGames = games.filter(game => 
+            game.name.toLowerCase().includes(filter.toLowerCase()) || 
+            game.platform.toLowerCase().includes(filter.toLowerCase())
+        );
+
+        filteredGames.forEach((game, index) => {
+            const originalIndex = games.findIndex(g => g.name === game.name && g.platform === game.platform);
             const li = document.createElement('li');
             li.innerHTML = `
                 <span>${game.name} - ${game.platform}</span>
                 <div>
-                    <button class="edit" data-index="${index}">编辑</button>
-                    <button class="delete" data-index="${index}">删除</button>
+                    <button class="edit" data-index="${originalIndex}">编辑</button>
+                    <button class="delete" data-index="${originalIndex}">删除</button>
                 </div>
             `;
             gamesList.appendChild(li);
@@ -47,7 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const index = e.target.dataset.index;
             games.splice(index, 1);
             saveGames();
-            renderGames();
+            renderGames(searchBox.value);
         } else if (e.target.classList.contains('edit')) {
             const index = e.target.dataset.index;
             const game = games[index];
@@ -56,9 +61,13 @@ document.addEventListener('DOMContentLoaded', () => {
             if (newName && newPlatform) {
                 games[index] = { name: newName, platform: newPlatform };
                 saveGames();
-                renderGames();
+                renderGames(searchBox.value);
             }
         }
+    });
+
+    searchBox.addEventListener('input', (e) => {
+        renderGames(e.target.value);
     });
 
     renderGames();
